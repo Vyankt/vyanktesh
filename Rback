@@ -1,0 +1,51 @@
+It looks like there might be a typo in your message ("rback" instead of "RBAC"), but I'll assume you're asking about setting up Role-Based Access Control (RBAC) for the Kubernetes dashboard on an AWS EC2 instance.
+
+Here are general steps you can follow to secure the Kubernetes dashboard using RBAC on an AWS EC2 instance:
+
+### 1. Deploy Kubernetes Dashboard:
+Before setting up RBAC, make sure you have the Kubernetes dashboard deployed. You can deploy it using the following command:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
+```
+
+### 2. Create Service Account and Cluster Role Binding:
+
+Create a service account for the dashboard:
+
+```bash
+kubectl create serviceaccount dashboard -n default
+```
+
+Create a cluster role binding to give the dashboard the necessary permissions:
+
+```bash
+kubectl create clusterrolebinding dashboard-admin-sa --clusterrole=cluster-admin --serviceaccount=default:dashboard
+```
+
+### 3. Get Bearer Token for Authentication:
+
+Get the token associated with the `dashboard` service account:
+
+```bash
+kubectl get secret $(kubectl get serviceaccount dashboard -o jsonpath="{.secrets[0].name}") -o jsonpath="{.data.token}" | base64 --decode
+```
+
+### 4. Access the Dashboard:
+
+Run the following command to start a proxy to the Kubernetes API server and access the dashboard locally:
+
+```bash
+kubectl proxy
+```
+
+The dashboard will be available at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/.
+
+### 5. Authenticate Using Bearer Token:
+
+When accessing the dashboard URL, choose the "Token" option for authentication and enter the token obtained in step 3.
+
+### Important Note:
+- Exposing the Kubernetes dashboard publicly is not recommended for security reasons. If you need to access the dashboard remotely, consider using a tool like `kubectl` port forwarding or setting up a secure connection using SSH tunnels or a VPN.
+
+These steps assume you have a working Kubernetes cluster and `kubectl` configured to interact with it. Additionally, ensure that your AWS EC2 security group allows traffic on the necessary ports. Adjust these steps based on your specific setup and security requirements
